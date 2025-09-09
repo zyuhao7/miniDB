@@ -1,4 +1,7 @@
 #include "types.h"
+/**
+ *  @brief 解析字符串到枚举类成员
+ */
 DataType parseType(const std::string &typeStr)
 {
     std::string t = typeStr;
