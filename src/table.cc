@@ -42,10 +42,18 @@ std::string getDbPath(const std::string &name)
     // 4. 拼接文件路径
     return dbDir + "/" + name + ".table";
 }
+/**
+ * 获取表文件路径的函数
+ * @param name 表名
+ * @return 返回表文件的完整路径
+ */
 static std::string getTableFilePath(const std::string &name)
 {
+    // 调用getDbPath函数获取数据库路径，并将其赋值给path变量
     std::string path = getDbPath(name);
+    // 输出调试信息，显示表文件路径
     std::cout << "[DEBUG] Table file path: " << path << std::endl;
+    // 返回获取到的表文件路径
     return path;
 }
 
