@@ -62,3 +62,5 @@ struct Table
      */
     void loadFromFile(const std::string &filename);
 };
+
+std::string getDbPath(const std::string &name);
