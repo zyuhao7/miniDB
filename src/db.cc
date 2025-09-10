@@ -145,59 +145,98 @@ void sqlDB::insertInto(std::string &name, const std::vector<std::string> &values
  * db.selectAll("employees", "", "", "salary", true);
  * @endcode
  */
-void sqlDB::selectAll(const std::string &name, const std::string &whereCol, const std::string &whereVal, const std::string &orderBy, bool desc, int limit)
+void sqlDB::selectAll(const std::string &name,
+                      const std::string &whereCol,
+                      const std::string &whereVal,
+                      const std::string &orderBy,
+                      bool desc,
+                      int limit)
 {
     std::string lname = name;
     std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
+
     if (!tables.count(lname))
     {
-        std::cout << "Table not found.\n";
+        std::cerr << "Table not found: " << lname << "\n";
         return;
     }
+
     Table &t = tables[lname];
+
+    // 打印列名
     for (const auto &col : t.columns)
         std::cout << col.name << "\t";
     std::cout << "\n";
 
+    // WHERE 条件处理
     int colIdx = -1;
     if (!whereCol.empty())
     {
         colIdx = t.getColumnIndex(whereCol);
         if (colIdx == -1)
         {
-            std::cout << "Column not found.\n";
+            std::cerr << "Column not found in WHERE: " << whereCol << "\n";
             return;
         }
     }
 
+    // 初始化行索引
     std::vector<std::size_t> rowIndices(t.rows.size());
     std::iota(rowIndices.begin(), rowIndices.end(), 0);
+
+    // ORDER BY 处理
     int orderIdx = -1;
     if (!orderBy.empty())
     {
         orderIdx = t.getColumnIndex(orderBy);
         if (orderIdx == -1)
         {
-            std::cout << "Column not found int ORDER BY. \n";
+            std::cerr << "Column not found in ORDER BY: " << orderBy << "\n";
             return;
         }
-    }
-    std::sort(rowIndices.begin(), rowIndices.end(), [&](size_t a, size_t b)
-              {
-        if(desc)
-            return t.rows[a].values[orderIdx] > t.rows[b].values[orderIdx];
-        else
-            return t.rows[a].values[orderIdx] < t.rows[b].values[orderIdx]; });
 
+        // 排序，只在 orderIdx 有效时进行
+        std::sort(rowIndices.begin(), rowIndices.end(),
+                  [&](size_t a, size_t b)
+                  {
+                      // 安全检查，防止越界
+                      if (orderIdx >= (int)t.rows[a].values.size() ||
+                          orderIdx >= (int)t.rows[b].values.size())
+                      {
+                          return false; // 保持顺序
+                      }
+
+                      if (desc)
+                          return t.rows[a].values[orderIdx] > t.rows[b].values[orderIdx];
+                      else
+                          return t.rows[a].values[orderIdx] < t.rows[b].values[orderIdx];
+                  });
+    }
+
+    // 遍历并输出
     int count = 0;
     for (size_t i : rowIndices)
     {
         const auto &row = t.rows[i];
-        if (!whereCol.empty() && trim(row.values[colIdx]) != trim(whereVal))
-            continue;
-        for (auto &val : row.values)
+
+        // WHERE 条件检查
+        if (colIdx != -1)
+        {
+            if (colIdx >= (int)row.values.size())
+            {
+                std::cerr << "Row missing column for WHERE check.\n";
+                continue;
+            }
+
+            if (trim(row.values[colIdx]) != trim(whereVal))
+                continue;
+        }
+
+        // 打印行
+        for (const auto &val : row.values)
             std::cout << val << "\t";
-        std::cout << std::endl;
+        std::cout << "\n";
+
         if (limit > 0 && ++count >= limit)
             break;
     }
@@ -232,26 +271,26 @@ void sqlDB::update(const std::string &name, const std::string &targetCol, const 
 {
     std::string lname = name;
     std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
-    if(!tables.coungt(lname))
+    if (!tables.count(lname))
         return;
-    Table& t = tables[lname];
+    Table &t = tables[lname];
 
     int targetIdx = t.getColumnIndex(targetCol);
-    int whereIdx = t.getColumnIndex(whereCol);   
-    if(targetIdx == -1 || whereIdx == -1)
+    int whereIdx = t.getColumnIndex(whereCol);
+    if (targetIdx == -1 || whereIdx == -1)
     {
-        std::cout<<"Column not found. \n";
+        std::cout << "Column not found. \n";
         return;
     }
-    for(auto& row: t.rows)
+    for (auto &row : t.rows)
     {
-        if(row.values[whereIdx] == whereVal)
+        if (row.values[whereIdx] == whereVal)
         {
             row.values[targetIdx] = newVal;
         }
     }
     t.saveToFile(lname);
-    std::cout<<"Rows updated. \n";
+    std::cout << "Rows updated. \n";
 }
 
 /**
@@ -279,29 +318,30 @@ void sqlDB::update(const std::string &name, const std::string &targetCol, const 
  * @endcode
  */
 
- void sqlDB::deleteRows(const std::string &name, const std::string &whereCol, const std::string &whereVal)
- {
-      std::string lname = name;
+void sqlDB::deleteRows(const std::string &name, const std::string &whereCol, const std::string &whereVal)
+{
+    std::string lname = name;
     std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
-    if(!tables.count(lname))
+    if (!tables.count(lname))
         return;
-    Table& t = tables[lname];
+    Table &t = tables[lname];
 
     int whereIdx = t.getColumnIndex(whereCol);
-    if(whereIdx == -1)
+    if (whereIdx == -1)
     {
-        cout<<"Column not found. \n";
+        std::cout << "Column not found. \n";
         return;
     }
-    auto& rows = t.rows;
-       rows.erase(std::remove_if(rows.begin(), rows.end(),
-                              [&](const Row& r) {
+    auto &rows = t.rows;
+    rows.erase(std::remove_if(rows.begin(), rows.end(),
+                              [&](const Row &r)
+                              {
                                   return r.values[whereIdx] == whereVal;
                               }),
                rows.end());
-      t.saveToFile(lname);
-    std::cout<<"Rows deleted. \n";
- }
+    t.saveToFile(lname);
+    std::cout << "Rows deleted. \n";
+}
 
 /**
  * @brief 保存数据库中所有表的数据到文件
@@ -324,7 +364,7 @@ void sqlDB::update(const std::string &name, const std::string &targetCol, const 
  */
 void sqlDB::saveAll()
 {
-     for (auto it = tables.begin(); it != tables.end(); ++it)
+    for (auto it = tables.begin(); it != tables.end(); ++it)
     {
         it->second.saveToFile(it->first);
     }
@@ -398,7 +438,7 @@ void sqlDB::dropTable(const std::string &name)
     tables.erase(lname);
     // Remove file from disk
     std::string dropFile = getDbPath(name);
-     if (std::remove(dropFile.c_str()) == 0)
+    if (std::remove(dropFile.c_str()) == 0)
     {
         std::cout << "Table dropped and file deleted: " << lname << "\n";
     }
