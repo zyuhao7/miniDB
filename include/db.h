@@ -82,6 +82,12 @@ public:
     void loadAll(const std::vector<std::string> &tableNames);
 
     /**
+     *  @brief 删除指定表
+     *  @param name 表名
+     */
+    void dropTable(const std::string &name);
+
+    /**
      * @brief 向表中添加新列
      * @param tableName 表名
      * @param col 新增的列定义
