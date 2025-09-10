@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build sql_test",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-std=c++17",
+                "-g",                          // 调试信息
+                "-I", "../include",            // 头文件路径
+                "test_sqlDB.cc",
+                "db.cc",
+                "table.cc",
+                "types.cc",
+                "-o", "sql_test"               // 生成的可执行文件
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/src" // 在 src 目录下执行
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
