@@ -45,11 +45,11 @@ int main()
     // 7. 聚合函数
     std::string salaryCol = "salary";
     std::cout << "\n=== 聚合函数测试 ===" << std::endl;
-    db.aggregate(userTable, "sum", salaryCol);
-    db.aggregate(userTable, "avg", salaryCol);
-    db.aggregate(userTable, "min", salaryCol);
-    db.aggregate(userTable, "max", salaryCol);
-    db.aggregate(userTable, "count", salaryCol);
+    db.aggregate(userTable, "SUM", salaryCol);
+    db.aggregate(userTable, "AVG", salaryCol);
+    db.aggregate(userTable, "MIN", salaryCol);
+    db.aggregate(userTable, "MAX", salaryCol);
+    db.aggregate(userTable, "COUNT", salaryCol);
 
     // 8. 添加列
     std::cout << "\n=== 添加列 address ===" << std::endl;
